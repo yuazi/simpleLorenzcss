@@ -9,3 +9,188 @@
   opacity: 0.18;
   transition: opacity 0.5s ease;
 }
+
+/* ── Settings button ──────────────────────────────────────────────────────────*/
+#lorenz-settings-btn {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  z-index: 1000;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1px solid var(--lightgray);
+  background: var(--light);
+  color: var(--darkgray);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+  transition: opacity 0.2s, background 0.2s, transform 0.35s;
+  padding: 0;
+}
+
+#lorenz-settings-btn:hover,
+#lorenz-settings-btn.active {
+  opacity: 1;
+}
+
+#lorenz-settings-btn.active svg {
+  transform: rotate(45deg);
+}
+
+#lorenz-settings-btn svg {
+  transition: transform 0.35s;
+  pointer-events: none;
+}
+
+/* ── Focus mode ───────────────────────────────────────────────────────────────*/
+body.lorenz-focus #quartz-body,
+body.lorenz-focus header,
+body.lorenz-focus footer,
+body.lorenz-focus .left,
+body.lorenz-focus .right,
+body.lorenz-focus article,
+body.lorenz-focus .page-header,
+body.lorenz-focus .toc,
+body.lorenz-focus nav {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+body.lorenz-focus #lorenz-canvas {
+  opacity: 0.5 !important;
+  z-index: 0;
+}
+
+body.lorenz-focus #lorenz-settings-btn,
+body.lorenz-focus #lorenz-settings-panel {
+  z-index: 1001;
+}
+
+/* ── Settings panel ───────────────────────────────────────────────────────────*/
+#lorenz-settings-panel {
+  position: fixed;
+  bottom: 3.75rem;
+  right: 1.25rem;
+  z-index: 1000;
+  width: 260px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--light);
+  border: 1px solid var(--lightgray);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem 1rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px) scale(0.97);
+  transform-origin: bottom right;
+  transition: opacity 0.18s, transform 0.18s;
+}
+
+#lorenz-settings-panel.open {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0) scale(1);
+}
+
+#lorenz-settings-panel h4.lorenz-section {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gray);
+  margin: 0.75rem 0 0.4rem;
+}
+
+#lorenz-settings-panel h4.lorenz-section:first-child {
+  margin-top: 0;
+}
+
+#lorenz-settings-panel .lorenz-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.35rem;
+}
+
+#lorenz-settings-panel .lorenz-row .lorenz-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+#lorenz-settings-panel .lorenz-row .lorenz-row-header label {
+  font-size: 0.8rem;
+  color: var(--dark);
+}
+
+#lorenz-settings-panel .lorenz-row .lorenz-row-header .lorenz-val {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--gray);
+  min-width: 3.5rem;
+  text-align: right;
+}
+
+#lorenz-settings-panel .lorenz-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--secondary);
+  cursor: pointer;
+  height: 4px;
+}
+
+#lorenz-settings-panel .lorenz-focus-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-bottom: 0.65rem;
+  margin-bottom: 0.65rem;
+  border-bottom: 1px solid var(--lightgray);
+  font-size: 0.82rem;
+  color: var(--dark);
+}
+
+#lorenz-settings-panel .lorenz-focus-row .lorenz-focus-hint {
+  font-size: 0.7rem;
+  color: var(--gray);
+  flex: 1;
+}
+
+#lorenz-settings-panel .lorenz-focus-row .lorenz-toggle {
+  position: relative;
+  width: 2.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  border: 1px solid var(--lightgray);
+  background: var(--lightgray);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+#lorenz-settings-panel .lorenz-focus-row .lorenz-toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.2rem - 6px);
+  height: calc(1.2rem - 6px);
+  border-radius: 50%;
+  background: var(--gray);
+  transition: transform 0.2s, background 0.2s;
+}
+
+#lorenz-settings-panel .lorenz-focus-row .lorenz-toggle.on {
+  background: var(--secondary);
+  border-color: var(--secondary);
+}
+
+#lorenz-settings-panel .lorenz-focus-row .lorenz-toggle.on::after {
+  transform: translateX(1rem);
+  background: white;
+}
