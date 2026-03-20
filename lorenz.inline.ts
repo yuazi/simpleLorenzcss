@@ -1,17 +1,33 @@
 // Lorenz attractor background animation
 
-// ── Mutable parameters (live-updated via settings panel) ──────────────────────
-let lorenzSigma = 10
-let lorenzRho = 28
-let lorenzBeta = 8 / 3
-let lorenzDt = 0.005
-let lorenzTrailLength = 2000
-let lorenzNumParticles = 3
+// ── Defaults ─────────────────────────────────────────────────────────────────
+const LORENZ_DEFAULTS = { sigma: 10, rho: 28, beta: 8 / 3, dt: 0.005, trail: 2000, particles: 3 }
+const HALVORSEN_DEFAULTS = { a: 1.4, dt: 0.005, trail: 2000, particles: 3 }
 
-let halvorsenA = 1.4
-let halvorsenDt = 0.005
-let halvorsenTrailLength = 2000
-let halvorsenNumParticles = 3
+// ── Mutable parameters (live-updated via settings panel, persisted to localStorage) ──────────────────────────────────────
+let lorenzSigma = parseFloat(localStorage.getItem("lorenz.sigma") ?? String(LORENZ_DEFAULTS.sigma))
+let lorenzRho = parseFloat(localStorage.getItem("lorenz.rho") ?? String(LORENZ_DEFAULTS.rho))
+let lorenzBeta = parseFloat(localStorage.getItem("lorenz.beta") ?? String(LORENZ_DEFAULTS.beta))
+let lorenzDt = parseFloat(localStorage.getItem("lorenz.dt") ?? String(LORENZ_DEFAULTS.dt))
+let lorenzTrailLength = parseInt(
+  localStorage.getItem("lorenz.trail") ?? String(LORENZ_DEFAULTS.trail),
+  10,
+)
+let lorenzNumParticles = parseInt(
+  localStorage.getItem("lorenz.particles") ?? String(LORENZ_DEFAULTS.particles),
+  10,
+)
+
+let halvorsenA = parseFloat(localStorage.getItem("halvorsen.a") ?? String(HALVORSEN_DEFAULTS.a))
+let halvorsenDt = parseFloat(localStorage.getItem("halvorsen.dt") ?? String(HALVORSEN_DEFAULTS.dt))
+let halvorsenTrailLength = parseInt(
+  localStorage.getItem("halvorsen.trail") ?? String(HALVORSEN_DEFAULTS.trail),
+  10,
+)
+let halvorsenNumParticles = parseInt(
+  localStorage.getItem("halvorsen.particles") ?? String(HALVORSEN_DEFAULTS.particles),
+  10,
+)
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Particle {
@@ -135,11 +151,8 @@ function isDarkMode(): boolean {
 }
 
 // ── Settings panel ────────────────────────────────────────────────────────────
-function createSettingsUI(
-  onLorenzChange: () => void,
-  onHalvorsenChange: () => void,
-): void {
-  if (document.getElementById("lorenz-settings-btn")) return
+function createSettingsUI(onLorenzChange: () => void, onHalvorsenChange: () => void): () => void {
+  if (document.getElementById("lorenz-settings-btn")) return () => {}
 
   // ── Button ────────────────────────────────────────────────────────────────
   const btn = document.createElement("button")
@@ -161,13 +174,14 @@ function createSettingsUI(
   })
 
   // Close when clicking outside
-  document.addEventListener("click", (e) => {
+  const outsideClickHandler = (e: MouseEvent) => {
     if (!panel.contains(e.target as Node) && e.target !== btn) {
       panel.classList.remove("open")
       panel.setAttribute("aria-hidden", "true")
       btn.classList.remove("active")
     }
-  })
+  }
+  document.addEventListener("click", outsideClickHandler)
 
   // ── Slider builder ────────────────────────────────────────────────────────
   function makeSlider(
@@ -248,11 +262,12 @@ function createSettingsUI(
     setFocus(next)
   })
 
-  document.addEventListener("keydown", (e) => {
+  const escHandler = (e: KeyboardEvent) => {
     if (e.key === "Escape" && document.body.classList.contains("lorenz-focus")) {
       setFocus(false)
     }
-  })
+  }
+  document.addEventListener("keydown", escHandler)
 
   focusRow.appendChild(focusLabel)
   focusRow.appendChild(focusHint)
@@ -261,23 +276,221 @@ function createSettingsUI(
 
   // ── Lorenz section ────────────────────────────────────────────────────────
   panel.appendChild(makeSection("Main Attractor (Lorenz)"))
-  panel.appendChild(makeSlider("σ (sigma)", 1, 50, 0.1, () => lorenzSigma, (v) => { lorenzSigma = v }, onLorenzChange))
-  panel.appendChild(makeSlider("ρ (rho)", 1, 60, 0.5, () => lorenzRho, (v) => { lorenzRho = v }, onLorenzChange))
-  panel.appendChild(makeSlider("β (beta)", 0.1, 10, 0.01, () => lorenzBeta, (v) => { lorenzBeta = v }, onLorenzChange))
-  panel.appendChild(makeSlider("Speed (dt)", 0.001, 0.02, 0.0005, () => lorenzDt, (v) => { lorenzDt = v }, () => {}))
-  panel.appendChild(makeSlider("Trail length", 100, 5000, 100, () => lorenzTrailLength, (v) => { lorenzTrailLength = Math.round(v) }, () => {}))
-  panel.appendChild(makeSlider("Particles", 1, 6, 1, () => lorenzNumParticles, (v) => { lorenzNumParticles = Math.round(v) }, onLorenzChange))
+  panel.appendChild(
+    makeSlider(
+      "σ (sigma)",
+      1,
+      50,
+      0.1,
+      () => lorenzSigma,
+      (v) => {
+        lorenzSigma = v
+        localStorage.setItem("lorenz.sigma", String(v))
+      },
+      onLorenzChange,
+    ),
+  )
+  panel.appendChild(
+    makeSlider(
+      "ρ (rho)",
+      1,
+      60,
+      0.5,
+      () => lorenzRho,
+      (v) => {
+        lorenzRho = v
+        localStorage.setItem("lorenz.rho", String(v))
+      },
+      onLorenzChange,
+    ),
+  )
+  panel.appendChild(
+    makeSlider(
+      "β (beta)",
+      0.1,
+      10,
+      0.01,
+      () => lorenzBeta,
+      (v) => {
+        lorenzBeta = v
+        localStorage.setItem("lorenz.beta", String(v))
+      },
+      onLorenzChange,
+    ),
+  )
+  panel.appendChild(
+    makeSlider(
+      "Speed (dt)",
+      0.001,
+      0.02,
+      0.0005,
+      () => lorenzDt,
+      (v) => {
+        lorenzDt = v
+        localStorage.setItem("lorenz.dt", String(v))
+      },
+      () => {},
+    ),
+  )
+  panel.appendChild(
+    makeSlider(
+      "Trail length",
+      100,
+      5000,
+      100,
+      () => lorenzTrailLength,
+      (v) => {
+        lorenzTrailLength = Math.round(v)
+        localStorage.setItem("lorenz.trail", String(Math.round(v)))
+      },
+      () => {},
+    ),
+  )
+  panel.appendChild(
+    makeSlider(
+      "Particles",
+      1,
+      6,
+      1,
+      () => lorenzNumParticles,
+      (v) => {
+        lorenzNumParticles = Math.round(v)
+        localStorage.setItem("lorenz.particles", String(Math.round(v)))
+      },
+      onLorenzChange,
+    ),
+  )
 
   // ── Halvorsen section ─────────────────────────────────────────────────────
   panel.appendChild(makeSection("Side Attractors (Halvorsen)"))
-  panel.appendChild(makeSlider("a", 0.1, 3, 0.01, () => halvorsenA, (v) => { halvorsenA = v }, () => {}))
-  panel.appendChild(makeSlider("Speed (dt)", 0.001, 0.02, 0.0005, () => halvorsenDt, (v) => { halvorsenDt = v }, () => {}))
-  panel.appendChild(makeSlider("Trail length", 100, 5000, 100, () => halvorsenTrailLength, (v) => { halvorsenTrailLength = Math.round(v) }, () => {}))
-  panel.appendChild(makeSlider("Particles", 1, 6, 1, () => halvorsenNumParticles, (v) => { halvorsenNumParticles = Math.round(v) }, onHalvorsenChange))
+  panel.appendChild(
+    makeSlider(
+      "a",
+      0.1,
+      3,
+      0.01,
+      () => halvorsenA,
+      (v) => {
+        halvorsenA = v
+        localStorage.setItem("halvorsen.a", String(v))
+      },
+      () => {},
+    ),
+  )
+  panel.appendChild(
+    makeSlider(
+      "Speed (dt)",
+      0.001,
+      0.02,
+      0.0005,
+      () => halvorsenDt,
+      (v) => {
+        halvorsenDt = v
+        localStorage.setItem("halvorsen.dt", String(v))
+      },
+      () => {},
+    ),
+  )
+  panel.appendChild(
+    makeSlider(
+      "Trail length",
+      100,
+      5000,
+      100,
+      () => halvorsenTrailLength,
+      (v) => {
+        halvorsenTrailLength = Math.round(v)
+        localStorage.setItem("halvorsen.trail", String(Math.round(v)))
+      },
+      () => {},
+    ),
+  )
+  panel.appendChild(
+    makeSlider(
+      "Particles",
+      1,
+      6,
+      1,
+      () => halvorsenNumParticles,
+      (v) => {
+        halvorsenNumParticles = Math.round(v)
+        localStorage.setItem("halvorsen.particles", String(Math.round(v)))
+      },
+      onHalvorsenChange,
+    ),
+  )
+
+  // ── Reset button ──────────────────────────────────────────────────────────
+  const resetBtn = document.createElement("button")
+  resetBtn.className = "lorenz-reset-btn"
+  resetBtn.textContent = "Reset to defaults"
+  resetBtn.addEventListener("click", () => {
+    // Reset variables
+    lorenzSigma = LORENZ_DEFAULTS.sigma
+    lorenzRho = LORENZ_DEFAULTS.rho
+    lorenzBeta = LORENZ_DEFAULTS.beta
+    lorenzDt = LORENZ_DEFAULTS.dt
+    lorenzTrailLength = LORENZ_DEFAULTS.trail
+    lorenzNumParticles = LORENZ_DEFAULTS.particles
+    halvorsenA = HALVORSEN_DEFAULTS.a
+    halvorsenDt = HALVORSEN_DEFAULTS.dt
+    halvorsenTrailLength = HALVORSEN_DEFAULTS.trail
+    halvorsenNumParticles = HALVORSEN_DEFAULTS.particles
+    // Clear localStorage
+    ;[
+      "lorenz.sigma",
+      "lorenz.rho",
+      "lorenz.beta",
+      "lorenz.dt",
+      "lorenz.trail",
+      "lorenz.particles",
+      "halvorsen.a",
+      "halvorsen.dt",
+      "halvorsen.trail",
+      "halvorsen.particles",
+    ].forEach((k) => localStorage.removeItem(k))
+    // Rebuild particles and re-create sliders with fresh values
+    onLorenzChange()
+    onHalvorsenChange()
+    const existingBtn = document.getElementById("lorenz-settings-btn")
+    const existingPanel = document.getElementById("lorenz-settings-panel")
+    existingBtn?.remove()
+    existingPanel?.remove()
+    // Clean up document-level listeners before recreating to prevent buildup
+    document.removeEventListener("click", outsideClickHandler)
+    document.removeEventListener("keydown", escHandler)
+    createSettingsUI(onLorenzChange, onHalvorsenChange)
+  })
+  panel.appendChild(resetBtn)
+
+  return () => {
+    document.removeEventListener("click", outsideClickHandler)
+    document.removeEventListener("keydown", escHandler)
+  }
 }
+
+// ── Module-level handler refs to prevent listener accumulation across startLorenz() calls ──
+let _lorenzResizeHandler: (() => void) | null = null
+let _lorenzNavHandler: (() => void) | null = null
+let _settingsCleanup: (() => void) | null = null
+let _lorenzResizeTimer: ReturnType<typeof setTimeout> | undefined
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 function startLorenz(): void {
+  // Remove previous listeners so re-entry (canvas removed by micromorph) doesn't accumulate them
+  if (_lorenzResizeHandler) {
+    window.removeEventListener("resize", _lorenzResizeHandler)
+    _lorenzResizeHandler = null
+  }
+  if (_lorenzNavHandler) {
+    document.removeEventListener("nav", _lorenzNavHandler)
+    _lorenzNavHandler = null
+  }
+  if (_settingsCleanup) {
+    _settingsCleanup()
+    _settingsCleanup = null
+  }
+
   const canvas = setupCanvas()
   resizeCanvas(canvas)
 
@@ -285,8 +498,12 @@ function startLorenz(): void {
 
   // Particle arrays — rebuilt when particle-count changes
   let particles: Particle[] = Array.from({ length: lorenzNumParticles }, (_, i) => initParticle(i))
-  let particlesLeft: Particle[] = Array.from({ length: halvorsenNumParticles }, (_, i) => initHalvorsen(i))
-  let particlesRight: Particle[] = Array.from({ length: halvorsenNumParticles }, (_, i) => initHalvorsen(i + 3))
+  let particlesLeft: Particle[] = Array.from({ length: halvorsenNumParticles }, (_, i) =>
+    initHalvorsen(i),
+  )
+  let particlesRight: Particle[] = Array.from({ length: halvorsenNumParticles }, (_, i) =>
+    initHalvorsen(i + 3),
+  )
 
   function rebuildLorenz(): void {
     particles = Array.from({ length: lorenzNumParticles }, (_, i) => initParticle(i))
@@ -297,7 +514,7 @@ function startLorenz(): void {
     particlesRight = Array.from({ length: halvorsenNumParticles }, (_, i) => initHalvorsen(i + 3))
   }
 
-  createSettingsUI(rebuildLorenz, rebuildHalvorsen)
+  _settingsCleanup = createSettingsUI(rebuildLorenz, rebuildHalvorsen)
 
   let rotZ = Math.random() * Math.PI * 2
   let rotZLeft = Math.random() * Math.PI * 2
@@ -312,14 +529,11 @@ function startLorenz(): void {
 
   ;[...particles, ...particlesLeft, ...particlesRight].forEach((p) => (p.trail = []))
 
-  let lastResize = 0
-  window.addEventListener("resize", () => {
-    const now = Date.now()
-    if (now - lastResize > 200) {
-      lastResize = now
-      resizeCanvas(canvas)
-    }
-  })
+  _lorenzResizeHandler = () => {
+    clearTimeout(_lorenzResizeTimer)
+    _lorenzResizeTimer = setTimeout(() => resizeCanvas(canvas), 150)
+  }
+  window.addEventListener("resize", _lorenzResizeHandler)
 
   let frameId: number
 
@@ -366,12 +580,27 @@ function startLorenz(): void {
         const drawEvery = 2
         for (let j = drawEvery; j < trailLen; j += drawEvery) {
           const alpha = (j / trailLen) * 0.6
-          const [tx, ty] = project(trail[j].x, trail[j].y, trail[j].z, cx, cy, sc, 0.6, rZ, czOffset)
+          const [tx, ty] = project(
+            trail[j].x,
+            trail[j].y,
+            trail[j].z,
+            cx,
+            cy,
+            sc,
+            0.6,
+            rZ,
+            czOffset,
+          )
           const [px2, py2] = project(
             trail[j - drawEvery].x,
             trail[j - drawEvery].y,
             trail[j - drawEvery].z,
-            cx, cy, sc, 0.6, rZ, czOffset,
+            cx,
+            cy,
+            sc,
+            0.6,
+            rZ,
+            czOffset,
           )
           ctx.beginPath()
           ctx.moveTo(px2, py2)
@@ -398,7 +627,7 @@ function startLorenz(): void {
 
   draw()
 
-  document.addEventListener("nav", () => {
+  _lorenzNavHandler = () => {
     cancelAnimationFrame(frameId)
     const c = document.getElementById("lorenz-canvas") as HTMLCanvasElement | null
     if (!c) {
@@ -406,6 +635,16 @@ function startLorenz(): void {
     } else {
       frameId = requestAnimationFrame(draw)
     }
+  }
+  document.addEventListener("nav", _lorenzNavHandler)
+
+  // Chaos event listener
+  document.addEventListener("lorenz-chaos", () => {
+    lorenzSigma = 10 + Math.random() * 20
+    lorenzRho = 28 + Math.random() * 20
+    lorenzBeta = 8 / 3 + Math.random() * 2
+    lorenzDt = 0.015 // high speed
+    rebuildLorenz()
   })
 }
 
